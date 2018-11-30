@@ -1,5 +1,6 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui, QtTest
 import pyautogui
+import random
 
 class Canvas(QtWidgets.QWidget):
 	def __init__(self, app, r, mode):
@@ -16,9 +17,9 @@ class Canvas(QtWidgets.QWidget):
 		self.primaryColor = QtGui.QColor(100,100,100,200)
 
 		self.moveTimer = self.startTimer(16)
-		self.modeTimer = self.startTimer(5000)
+		#self.modeTimer = self.startTimer(5000)
 		self.quitTimer = self.startTimer(15000)
-		self.pushTimer = self.startTimer(3000)
+		#self.pushTimer = self.startTimer(3000)
 
 		#self.showFullScreen()
 		self.show()
@@ -37,7 +38,13 @@ class Canvas(QtWidgets.QWidget):
 	def timerEvent(self, event):
 		if event.timerId() == self.moveTimer:
 			self.point = self.mapFromGlobal(QtGui.QCursor.pos())
+			# x = random.randint(0, self.app.primaryScreen().geometry().width())
+			# y = random.randint(0, self.app.primaryScreen().geometry().height())
+			# self.point = QtCore.QPoint(x,y)
+			# QtGui.QCursor.setPos(x,y)
+
 			self.update()
+
 		elif event.timerId() == self.modeTimer:
 			self.changeMode()
 			self.update()
