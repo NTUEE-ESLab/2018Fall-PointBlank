@@ -1,6 +1,5 @@
-import sys
-import random
 from PyQt5 import QtWidgets, QtCore, QtGui
+import pyautogui
 
 class Canvas(QtWidgets.QWidget):
 	def __init__(self, app, r, mode):
@@ -17,8 +16,9 @@ class Canvas(QtWidgets.QWidget):
 		self.primaryColor = QtGui.QColor(100,100,100,200)
 
 		self.moveTimer = self.startTimer(16)
-		self.modeTimer = self.startTimer(1000)
-		self.quitTimer = self.startTimer(5000)
+		self.modeTimer = self.startTimer(5000)
+		self.quitTimer = self.startTimer(15000)
+		self.pushTimer = self.startTimer(3000)
 
 		#self.showFullScreen()
 		self.show()
@@ -44,6 +44,9 @@ class Canvas(QtWidgets.QWidget):
 
 		elif event.timerId() == self.quitTimer:
 			self.app.quit()
+
+		elif event.timerId() == self.pushTimer:
+			pyautogui.press('down')
 
 	def changeMode(self):
 		if self.mode == "laser":
