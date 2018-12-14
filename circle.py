@@ -1,6 +1,7 @@
-from PyQt5 import QtWidgets, QtCore, QtGui, QtTest
+from PyQt5 import QtWidgets, QtCore, QtGui, QtBluetooth
 import pyautogui
 import random
+import sys
 
 class Canvas(QtWidgets.QWidget):
 	def __init__(self, app, r, mode):
@@ -69,5 +70,4 @@ if __name__ == '__main__':
 	mode = "laser"
 	canvas = Canvas(app, r, mode)
 
-	app.exec()
-	#sys.exit(app.exec_())
+	sys.exit(app.exec())
