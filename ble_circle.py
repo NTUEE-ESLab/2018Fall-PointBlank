@@ -24,14 +24,17 @@ class Canvas(QtWidgets.QWidget):
 
 	def start(self):
 		print("ble setup finished")
-		self.moveTimer = self.startTimer(16)
-		self.quitTimer = self.startTimer(15000)
+		self.moveTimer = self.startTimer(20)
+		# self.quitTimer = self.startTimer(15000)
 		# self.modeTimer = self.startTimer(5000)
 		# self.pushTimer = self.startTimer(3000)
 		self.show()
 
+	def quit(self):
+		self.app.quit()
+
 	def paintEvent(self, event):
-		if not self.visible:
+		if not self.visible or self.mode == "mouse":
 			return
 
 		painter = QtGui.QPainter(self)
@@ -45,6 +48,9 @@ class Canvas(QtWidgets.QWidget):
 		painter.drawEllipse(self.point, self.r, self.r)
 	
 	def timerEvent(self, event):
+		if not self.visible:
+			return
+
 		if event.timerId() == self.moveTimer:
 			# self.point = self.mapFromGlobal(QtGui.QCursor.pos())
 
@@ -56,8 +62,8 @@ class Canvas(QtWidgets.QWidget):
 
 			self.update()
 
-		elif event.timerId() == self.quitTimer:
-			self.app.quit()
+		# elif event.timerId() == self.quitTimer:
+		# 	self.quit()
 
 		# elif event.timerId() == self.modeTimer:
 		# 	self.changeMode()
@@ -71,16 +77,28 @@ class Canvas(QtWidgets.QWidget):
 		self.update()
 
 	def leftClick(self, value):
-		if value:
-			pyautogui.mouseDown()
+		if self.mode == "mouse":
+			if value:
+				pyautogui.mouseDown()
+			else:
+				pyautogui.mouseUp()
 		else:
-			pyautogui.mouseUp()
+			if value:
+				pyautogui.keyDown('down')
+			else:
+				pyautogui.keyUp('down')
 
 	def rightClick(self, value):
-		if value:
-			pyautogui.mouseDown(button='right')
+		if self.mode == "mouse":
+			if value:
+				pyautogui.mouseDown(button='right')
+			else:
+				pyautogui.mouseUp(button='right')
 		else:
-			pyautogui.mouseUp(button='right')
+			if value:
+				pyautogui.keyDown('up')
+			else:
+				pyautogui.keyUp('up')
 
 	def changeMode(self, value):
 		if value:
@@ -88,6 +106,9 @@ class Canvas(QtWidgets.QWidget):
 				self.mode = "highlight"
 
 			elif self.mode == "highlight":
+				self.mode = "mouse"
+
+			elif self.mode == "mouse":
 				self.mode = "laser"
 
 			self.update()

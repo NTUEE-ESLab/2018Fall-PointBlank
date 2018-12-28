@@ -9,6 +9,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 	button2 = QtCore.pyqtSignal(bool)
 	button3 = QtCore.pyqtSignal(bool)
 	button4 = QtCore.pyqtSignal(bool)
+	button5 = QtCore.pyqtSignal()
 
 	def __init__(self, parent):
 		super().__init__()
@@ -22,7 +23,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 		self.central = None
 		self.service = None
 		self.positionChrc = None
-		self.buttonChrcs = []
+		self.buttonsPressChrc = None
 
 		self.x = 0.5
 		self.y = 0.5
@@ -30,10 +31,13 @@ class PointBlankBleClient(QtWidgets.QWidget):
 		self.descriptCount = 0
 
 		self.setupDone.connect(parent.start)
-		self.button1.connect(parent.changeVisibility)
+
+		self.button1.connect(parent.changeMode)
 		self.button2.connect(parent.leftClick)
 		self.button3.connect(parent.rightClick)
-		self.button4.connect(parent.changeMode)
+		self.button4.connect(parent.changeVisibility)
+		self.button5.connect(parent.quit)
+
 
 	def readPos(self):
 		# self.service.readCharacteristic(self.positionChrc)
@@ -74,39 +78,43 @@ class PointBlankBleClient(QtWidgets.QWidget):
 	def detailsDiscovered(self, state):
 		if state == QtBluetooth.QLowEnergyService.ServiceDiscovered:
 			self.positionChrc = self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000125-0000-1000-8000-00805f9b34fb}'))
-			self.buttonChrcs.append(self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000225-0000-1000-8000-00805f9b34fb}')))
-			self.buttonChrcs.append(self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000325-0000-1000-8000-00805f9b34fb}')))
-			self.buttonChrcs.append(self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000425-0000-1000-8000-00805f9b34fb}')))
-			self.buttonChrcs.append(self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000525-0000-1000-8000-00805f9b34fb}')))
+			self.buttonsPressChrc = self.service.characteristic(QtBluetooth.QBluetoothUuid('{00000225-0000-1000-8000-00805f9b34fb}'))
 
 			des = self.positionChrc.descriptor( QtBluetooth.QBluetoothUuid(QtBluetooth.QBluetoothUuid.ClientCharacteristicConfiguration) )
 			self.service.writeDescriptor(des, bytes.fromhex('0100'))
 
-			for i in range(4):
-				des = self.buttonChrcs[i].descriptor( QtBluetooth.QBluetoothUuid(QtBluetooth.QBluetoothUuid.ClientCharacteristicConfiguration) )
-				self.service.writeDescriptor(des, bytes.fromhex('0100'))
+			des = self.buttonsPressChrc.descriptor( QtBluetooth.QBluetoothUuid(QtBluetooth.QBluetoothUuid.ClientCharacteristicConfiguration) )
+			self.service.writeDescriptor(des, bytes.fromhex('0100'))
 
 			pos = self.positionChrc.value()
 			self.x, self.y = struct.unpack("<ff", pos)
 
 	def countDescript(self):
 		self.descriptCount += 1
-		if self.descriptCount == 5:
+		if self.descriptCount == 2:
 			self.service.characteristicChanged.connect(self.notification)
 			self.setupDone.emit()
 
 	def notification(self, characteristic, value):
 		if characteristic == self.positionChrc:
 			self.x, self.y = struct.unpack("<ff", value)
-		elif characteristic == self.buttonChrcs[0]: #visible
-			# print("button 1 visibility")
-			self.button1.emit(ord(bytes(value)))
-		elif characteristic == self.buttonChrcs[1]: #left click
-			# print("button 2 left click")
-			self.button2.emit(ord(bytes(value)))
-		elif characteristic == self.buttonChrcs[2]: #right click
-			# print("button 3 right click")
-			self.button3.emit(ord(bytes(value)))
-		elif characteristic == self.buttonChrcs[3]: #change mode
-			# print("button 4 change mode")
-			self.button4.emit(ord(bytes(value)))
+		elif characteristic == self.buttonsPressChrc:
+			v = ord(bytes(value))
+			if v == 1:
+				self.button1.emit(False)
+			elif v == 2:
+				self.button1.emit(True)
+			elif v == 3:
+				self.button2.emit(False)
+			elif v == 4:
+				self.button2.emit(True)
+			elif v == 5:
+				self.button3.emit(False)
+			elif v == 6:
+				self.button3.emit(True)
+			elif v == 7:
+				self.button4.emit(False)
+			elif v == 8:
+				self.button4.emit(True)
+			elif v == 9:
+				self.button5.emit()

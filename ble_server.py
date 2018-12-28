@@ -10,8 +10,22 @@ import gobject
 
 import random
 import struct
+import os
+import time
+import errno
+
+import serial
 
 from bluez_example import *
+
+read_path = "/tmp/server_in.pipe"
+write_path = "/tmp/server_out.pipe"
+rf = None
+wf = None
+
+start_time = None
+
+
 
 mainloop = None
 
@@ -40,10 +54,7 @@ class PointBlankService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.PB_UUID, True)
         self.add_characteristic(PositionChrc(bus, 0, self))
-        self.add_characteristic(ButtonChrc(bus, 1, '00000225-0000-1000-8000-00805f9b34fb', self))
-        self.add_characteristic(ButtonChrc(bus, 2, '00000325-0000-1000-8000-00805f9b34fb', self))
-        self.add_characteristic(ButtonChrc(bus, 3, '00000425-0000-1000-8000-00805f9b34fb', self))
-        self.add_characteristic(ButtonChrc(bus, 4, '00000525-0000-1000-8000-00805f9b34fb', self))
+        self.add_characteristic(ButtonsPressChrc(bus, 1, '00000225-0000-1000-8000-00805f9b34fb', self))
 
 class PositionChrc(Characteristic):
     PB_PS_UUID = '00000125-0000-1000-8000-00805f9b34fb'
@@ -56,30 +67,34 @@ class PositionChrc(Characteristic):
                 service)
         self.notifying = False
         
-        self.x = 0.5
-        self.y = 0.5
+        # self.x = 0.5
+        # self.y = 0.5
 
-        gobject.timeout_add(1000, self.move)
+        self.ba = b"\0\0\0\0\0\0\0\0"
+        gobject.timeout_add(20, self.move)
 
     def notify_motion(self):
         if not self.notifying:
             return
-        ba = struct.pack("<ff", self.x, self.y)
+        # ba = struct.pack("<ff", self.x, self.y)
         self.PropertiesChanged(
                 GATT_CHRC_IFACE,
-                { 'Value': dbus.ByteArray(ba) }, [])
+                { 'Value': dbus.ByteArray(self.ba) }, [])
 
     def move(self):
-        self.x = random.random()
-        self.y = random.random()
-        # print('Moving to: (' + repr(self.x) + ', ' + repr(self.y) + ')')
-        self.notify_motion()
+        global rf
+        try:
+            b = os.read(rf, 8)
+            if b:
+                self.ba = b
+                self.notify_motion()
+        except OSError as err:
+            pass
+
         return True
 
     def ReadValue(self):
-        print('Motion read: (' + repr(self.x) + ', ' + repr(self.y) + ')')
-        ba = struct.pack("<ff", self.x, self.y)
-        return dbus.ByteArray(ba)
+        return dbus.ByteArray(self.ba)
 
     def StartNotify(self):
         if self.notifying:
@@ -96,7 +111,7 @@ class PositionChrc(Characteristic):
 
         self.notifying = False
 
-class ButtonChrc(Characteristic):
+class ButtonsPressChrc(Characteristic):
     def __init__(self, bus, index, uuid, service):
         Characteristic.__init__(
                 self, bus, index,
@@ -106,28 +121,59 @@ class ButtonChrc(Characteristic):
         self.notifying = False
         
         self.state = 0
+        self.prevState = 0
+        self.action = 0
+        self.serialPort = serial.Serial("/dev/ttyACM0", 9600, timeout = 0)
+        self.serialPort.flushInput()
 
-        gobject.timeout_add(random.randint(1000,5000), self.push)
+        gobject.timeout_add(50, self.read_button)
 
     def notify_button(self):
         if not self.notifying:
             return
         self.PropertiesChanged(
                 GATT_CHRC_IFACE,
-                { 'Value': [dbus.Byte(self.state)] }, [])
+                { 'Value': [dbus.Byte(self.action)] }, [])
 
-    def push(self):
-        if self.state == 0:
-            self.state = 1
-        else:
-            self.state = 0
-        # print('Push button ' + str(self.state))
-        self.notify_button()
+    def read_button(self):
+        global rf
+        global wf
+        global start_time
+
+        b = self.serialPort.read()
+        if b:
+            self.state = ord(b)
+            if self.state != self.prevState:
+                if self.state == 0:
+                    self.action = self.prevState*2 - 1
+                    if self.prevState == 4:
+                        os.write(wf, bytearray(b'\x00'))
+                    elif self.prevState == 5:
+                        if time.time() - start_time > 2:
+                            os.write(wf, bytearray(b'\xFF'))
+                            os.close(rf)
+                            os.close(wf)
+                            mainloop.quit()
+
+                    # print ("button released")
+
+                else:
+                    self.action = self.state*2
+                    if self.state == 4:
+                        os.write(wf, bytearray(b'\x01'))
+                    if self.state == 5:
+                        start_time = time.time()
+                    # print ("button pushed")
+
+            self.prevState = self.state
+
+            self.notify_button()
+
         return True
 
     def ReadValue(self):
-        print('Read button ' + str(self.state))
-        return [dbus.Byte(self.state)]
+        print('Action ' + str(self.action))
+        return [dbus.Byte(self.action)]
 
     def StartNotify(self):
         if self.notifying:
@@ -174,6 +220,11 @@ def find_adapter(bus):
 
 def main():
     global mainloop
+    global rf
+    global wf
+
+    rf = os.open( read_path, os.O_RDONLY |  os.O_NONBLOCK )
+    wf = os.open( write_path, os.O_WRONLY )
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
