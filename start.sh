@@ -3,9 +3,6 @@
 pipe1=/tmp/server_in.pipe
 pipe2=/tmp/server_out.pipe
 
-trap "rm -f $pipe1" EXIT
-trap "rm -f $pipe2" EXIT
-
 if [[ ! -p $pipe1 ]]; then
     mkfifo $pipe1
 fi

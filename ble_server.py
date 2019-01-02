@@ -140,6 +140,8 @@ class ButtonsPressChrc(Characteristic):
         global wf
         global start_time
 
+        send = True
+
         b = self.serialPort.read()
         if b:
             self.state = ord(b)
@@ -154,6 +156,8 @@ class ButtonsPressChrc(Characteristic):
                             os.close(rf)
                             os.close(wf)
                             mainloop.quit()
+                        else:
+                            send = False
 
                     # print ("button released")
 
@@ -167,7 +171,8 @@ class ButtonsPressChrc(Characteristic):
 
             self.prevState = self.state
 
-            self.notify_button()
+            if send:
+                self.notify_button()
 
         return True
 
