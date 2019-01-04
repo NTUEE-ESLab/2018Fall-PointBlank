@@ -116,5 +116,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 				self.button4.emit(False)
 			elif v == 8:
 				self.button4.emit(True)
+				self.x = 0.5
+				self.y = 0.5
 			elif v == 9:
 				self.button5.emit()

@@ -2,12 +2,16 @@ from PyQt5 import QtWidgets, QtCore, QtGui, QtBluetooth
 import pyautogui
 import random
 import sys
+import os
+import json
 
 import ble_client
 
 class Canvas(QtWidgets.QWidget):
-	def __init__(self, app, r, mode):
+	def __init__(self, app):
 		super().__init__()
+		self.fd = os.open("settings.dat", os.O_RDONLY)
+		self.readSettings()
 
 		self.setGeometry(app.primaryScreen().geometry())
 		self.setAttribute(QtCore.Qt.WA_TranslucentBackground)		
@@ -16,11 +20,25 @@ class Canvas(QtWidgets.QWidget):
 		self.app = app
 		self.point = app.primaryScreen().geometry().center()
 		self.r = r
-		self.mode = mode
+		self.width = width
+		self.mode = "laser"
 		self.primaryColor = QtGui.QColor(100,100,100,200)
 		self.visible = False
 
 		self.ble = ble_client.PointBlankBleClient(self)
+
+	def readSettings(self):
+		if self.fd > 0:
+			buf = os.read(self.fd, 256)
+			args = json.loads(buf.decode())
+			self.r = args[0]
+			self.width = args[1]
+			self.color = QtGui.QColor(args[2][0],args[2][1],args[2][2],args[2][3])
+			os.close(self.fd)
+		else:
+			self.r = 100
+			self.width = 5
+			self.color = QtGui.QColor(100,100,100,200)
 
 	def start(self):
 		print("ble setup finished")
@@ -38,14 +56,18 @@ class Canvas(QtWidgets.QWidget):
 			return
 
 		painter = QtGui.QPainter(self)
+		painter.setRenderHint(QtGui.QPainter.Antialiasing)
 		painter.setCompositionMode(QtGui.QPainter.CompositionMode_Source)
 		if self.mode == "laser":
 			painter.setBrush(self.primaryColor)
-		elif self.mode == "highlight":
+			painter.drawEllipse(self.point, self.r, self.r)
 			painter.setBrush(QtCore.Qt.transparent)
+			painter.drawEllipse(self.point, self.r-self.width, self.r-self.width)
+		elif self.mode == "highlight":
 			painter.fillRect(self.app.primaryScreen().geometry(),self.primaryColor)
+			painter.setBrush(QtCore.Qt.transparent)
+			painter.drawEllipse(self.point, self.r, self.r)
 
-		painter.drawEllipse(self.point, self.r, self.r)
 	
 	def timerEvent(self, event):
 		if not self.visible:
@@ -116,8 +138,6 @@ class Canvas(QtWidgets.QWidget):
 
 if __name__ == '__main__':
 	app = QtWidgets.QApplication([])
-	r = 100
-	mode = "laser"
-	canvas = Canvas(app, r, mode)
+	canvas = Canvas(app)
 
 	sys.exit(app.exec())

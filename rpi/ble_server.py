@@ -13,6 +13,7 @@ import struct
 import os
 import time
 import errno
+import subprocess
 
 import serial
 
@@ -155,6 +156,8 @@ class ButtonsPressChrc(Characteristic):
                             os.write(wf, bytearray(b'\xFF'))
                             os.close(rf)
                             os.close(wf)
+
+
                             mainloop.quit()
                         else:
                             send = False
@@ -267,6 +270,8 @@ def main():
                                     error_handler=register_service_error_cb)
 
     mainloop.run()
+
+    # subprocess.call(["shutdown", "-h", "now"])
 
 
 if __name__ == '__main__':
