@@ -10,7 +10,6 @@ import ble_client
 class Canvas(QtWidgets.QWidget):
 	def __init__(self, app):
 		super().__init__()
-		self.fd = os.open("settings.dat", os.O_RDONLY)
 		self.readSettings()
 
 		self.setGeometry(app.primaryScreen().geometry())
@@ -19,33 +18,30 @@ class Canvas(QtWidgets.QWidget):
 
 		self.app = app
 		self.point = app.primaryScreen().geometry().center()
-		self.r = r
-		self.width = width
 		self.mode = "laser"
-		self.primaryColor = QtGui.QColor(100,100,100,200)
 		self.visible = False
 
 		self.ble = ble_client.PointBlankBleClient(self)
 
 	def readSettings(self):
-		if self.fd > 0:
+
+		try:
+			self.fd = os.open("settings.dat", os.O_RDONLY)
 			buf = os.read(self.fd, 256)
 			args = json.loads(buf.decode())
 			self.r = args[0]
 			self.width = args[1]
 			self.color = QtGui.QColor(args[2][0],args[2][1],args[2][2],args[2][3])
+			self.factor = args[3]
 			os.close(self.fd)
-		else:
+		except:
 			self.r = 100
 			self.width = 5
 			self.color = QtGui.QColor(100,100,100,200)
+			self.factor = 2
 
 	def start(self):
 		print("ble setup finished")
-		self.moveTimer = self.startTimer(20)
-		# self.quitTimer = self.startTimer(15000)
-		# self.modeTimer = self.startTimer(5000)
-		# self.pushTimer = self.startTimer(3000)
 		self.show()
 
 	def quit(self):
@@ -59,43 +55,46 @@ class Canvas(QtWidgets.QWidget):
 		painter.setRenderHint(QtGui.QPainter.Antialiasing)
 		painter.setCompositionMode(QtGui.QPainter.CompositionMode_Source)
 		if self.mode == "laser":
-			painter.setBrush(self.primaryColor)
+			pen = QtGui.QPen(self.color)
+			pen.setWidth(self.width)
+			painter.setPen(pen)
 			painter.drawEllipse(self.point, self.r, self.r)
-			painter.setBrush(QtCore.Qt.transparent)
-			painter.drawEllipse(self.point, self.r-self.width, self.r-self.width)
 		elif self.mode == "highlight":
-			painter.fillRect(self.app.primaryScreen().geometry(),self.primaryColor)
+			painter.fillRect(self.app.primaryScreen().geometry(),self.color)
 			painter.setBrush(QtCore.Qt.transparent)
 			painter.drawEllipse(self.point, self.r, self.r)
+		elif self.mode == "magnify":
+			painter.setClipRegion(QtGui.QRegion((self.point.x() - self.r), (self.point.y() - self.r), 2*self.r, 2*self.r, QtGui.QRegion.Ellipse))
+			painter.setClipping(True)
+			painter.translate(-(self.factor - 1)*self.point)
+			painter.drawPixmap(0, 0, self.screenshot)
+			painter.setClipping(False)
+			pen = QtGui.QPen(self.color)
+			pen.setWidth(self.width)
+			painter.setPen(pen)
+			painter.drawEllipse(self.point*self.factor, self.r, self.r)
 
-	
-	def timerEvent(self, event):
+	def move(self):
 		if not self.visible:
 			return
 
-		if event.timerId() == self.moveTimer:
-			# self.point = self.mapFromGlobal(QtGui.QCursor.pos())
+		pos = self.ble.readPos()
+		x = int(pos[0]*self.app.primaryScreen().geometry().width())
+		y = int(pos[1]*self.app.primaryScreen().geometry().height())
+		self.point = QtCore.QPoint(x,y)
+		QtGui.QCursor.setPos(x,y)
 
-			pos = self.ble.readPos()
-			x = int(pos[0]*self.app.primaryScreen().geometry().width())
-			y = int(pos[1]*self.app.primaryScreen().geometry().height())
-			self.point = QtCore.QPoint(x,y)
-			QtGui.QCursor.setPos(x,y)
-
-			self.update()
-
-		# elif event.timerId() == self.quitTimer:
-		# 	self.quit()
-
-		# elif event.timerId() == self.modeTimer:
-		# 	self.changeMode()
-		# 	self.update()
-
-		# elif event.timerId() == self.pushTimer:
-		# 	pyautogui.press('down')
+		self.update()
 
 	def changeVisibility(self, value):
 		self.visible = value
+		if self.mode == "magnify" and value:
+			sc = self.app.primaryScreen().grabWindow(QtWidgets.QApplication.desktop().winId())
+			self.screenshot = sc.scaled(self.factor*sc.size())
+		pos = self.ble.readPos()
+		x = int(pos[0]*self.app.primaryScreen().geometry().width())
+		y = int(pos[1]*self.app.primaryScreen().geometry().height())
+		self.point = QtCore.QPoint(x,y)
 		self.update()
 
 	def leftClick(self, value):
@@ -128,6 +127,9 @@ class Canvas(QtWidgets.QWidget):
 				self.mode = "highlight"
 
 			elif self.mode == "highlight":
+				self.mode = "magnify"
+
+			elif self.mode == "magnify":
 				self.mode = "mouse"
 
 			elif self.mode == "mouse":

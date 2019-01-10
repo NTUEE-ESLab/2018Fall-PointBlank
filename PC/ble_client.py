@@ -10,6 +10,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 	button3 = QtCore.pyqtSignal(bool)
 	button4 = QtCore.pyqtSignal(bool)
 	button5 = QtCore.pyqtSignal()
+	pos = QtCore.pyqtSignal()
 
 	def __init__(self, parent):
 		super().__init__()
@@ -37,6 +38,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 		self.button3.connect(parent.rightClick)
 		self.button4.connect(parent.changeVisibility)
 		self.button5.connect(parent.quit)
+		self.pos.connect(parent.move)
 
 
 	def readPos(self):
@@ -98,6 +100,7 @@ class PointBlankBleClient(QtWidgets.QWidget):
 	def notification(self, characteristic, value):
 		if characteristic == self.positionChrc:
 			self.x, self.y = struct.unpack("<ff", value)
+			self.pos.emit()
 		elif characteristic == self.buttonsPressChrc:
 			v = ord(bytes(value))
 			if v == 1:
@@ -115,8 +118,8 @@ class PointBlankBleClient(QtWidgets.QWidget):
 			elif v == 7:
 				self.button4.emit(False)
 			elif v == 8:
-				self.button4.emit(True)
 				self.x = 0.5
 				self.y = 0.5
+				self.button4.emit(True)
 			elif v == 9:
 				self.button5.emit()

@@ -72,7 +72,7 @@ class PositionChrc(Characteristic):
         # self.y = 0.5
 
         self.ba = b"\0\0\0\0\0\0\0\0"
-        gobject.timeout_add(20, self.move)
+        gobject.timeout_add(10, self.move)
 
     def notify_motion(self):
         if not self.notifying:
