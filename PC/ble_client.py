@@ -46,17 +46,18 @@ class PointBlankBleClient(QtWidgets.QWidget):
 		return self.x, self.y
 
 	def checkDevice(self, device):
-		# print('UUID: {UUID}, Name: {name}, rssi: {rssi}'.format(UUID=device.deviceUuid().toString(),name=device.name(),rssi=device.rssi()))
-		if device.name() == "B8-27-EB-FA-20-93":
-			print("connecting to PointBlank")
-			self.central = QtBluetooth.QLowEnergyController.createCentral(device, self)
-			self.central.connected.connect(self.scanServices)
-			self.central.disconnected.connect(self.disconnection)
-			self.central.discoveryFinished.connect(self.servicesScanned)
-			self.central.error.connect(self.centralError)
+		# print('UUID: {UUID}, Name: {name}, rssi: {rssi}, services: {services}'.format(UUID=device.deviceUuid().toString(),name=device.name(),rssi=device.rssi(),services=device.serviceUuids()))
+		if len(device.serviceUuids()[0]) > 0:
+			if device.serviceUuids()[0][0].toString() == '{00003125-0000-1000-8000-00805f9b34fb}':
+				print("connecting to PointBlank")
+				self.central = QtBluetooth.QLowEnergyController.createCentral(device, self)
+				self.central.connected.connect(self.scanServices)
+				self.central.disconnected.connect(self.disconnection)
+				self.central.discoveryFinished.connect(self.servicesScanned)
+				self.central.error.connect(self.centralError)
 
-			self.central.connectToDevice()
-			self.discoverer.stop()
+				self.central.connectToDevice()
+				self.discoverer.stop()
 
 	def scanServices(self):
 		print("connected to PointBlank")

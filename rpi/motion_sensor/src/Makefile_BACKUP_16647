@@ -3,8 +3,13 @@ CFLAGS  = -Wall
 LFLAGS  = -lm 
 SrcType = c
 SrcDir  = ./
+<<<<<<< HEAD
+ObjDir  = ../obj/
+BinDir  = ../bin/
+=======
 ObjDir  = obj/
 BinDir  = bin/
+>>>>>>> b54d28f2fd8a6d3f406ebd7a49b3967a61085b8f
 Srcs   := $(notdir $(wildcard $(SrcDir)*.$(SrcType)))
 Objs   := $(Srcs:%.$(SrcType)=%.o)
 Bin     = dmp
