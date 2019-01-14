@@ -11,6 +11,6 @@ if [[ ! -p $pipe2 ]]; then
     mkfifo $pipe2
 fi
 
-python ./ble_server.py &
+python /home/pi/PointBlank/ble_server.py &
 
-./mpu_test &
+/home/pi/PointBlank/motion_sensor/bin/dmp &

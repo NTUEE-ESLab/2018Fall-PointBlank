@@ -1,2 +1,3 @@
-/PC/__pycache__/*
-/rpi/__pycache__/*
+./PC/__pycache__/*
+./rpi/__pycache__/*
+./PC/settings.dat
