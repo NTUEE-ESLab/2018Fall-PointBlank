@@ -63,6 +63,8 @@ void dmp_filter_iir_func(dmp_filter_iir*, dmp_quaternion *input, dmp_quaternion 
 #define DMP_ACCEL_FS    MPU_ACCEL_FS_16
 #define DMP_ACCEL_DLPF  MPU_ACCEL_DLPF_5
 
+#define DMP_PROJECTION_SCALE  1.5
+
 typedef struct dmp_mpu_t {
 	int     fd;
 	float   gyro_unit;    /* unit: rad/s per LSB */
