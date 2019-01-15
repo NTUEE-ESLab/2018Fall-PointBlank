@@ -271,7 +271,7 @@ def main():
 
     mainloop.run()
 
-    # subprocess.call(["shutdown", "-h", "now"])
+    subprocess.call(["shutdown", "-h", "now"])
 
 
 if __name__ == '__main__':

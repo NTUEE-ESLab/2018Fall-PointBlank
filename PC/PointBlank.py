@@ -81,7 +81,7 @@ class Canvas(QtWidgets.QWidget):
 			painter.drawEllipse(self.point*self.factor, self.r, self.r)
 		else:
 			font = QtGui.QFont()
-			font.setPixelSize(16)
+			font.setPixelSize(24)
 			painter.setFont(font)
 			if self.mode == "started":
 				boundingRect = painter.boundingRect(QtCore.QRectF(self.app.primaryScreen().geometry()), QtCore.Qt.AlignRight|QtCore.Qt.AlignTop, "Connected to PointBlank")
