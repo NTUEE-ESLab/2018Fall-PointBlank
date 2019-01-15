@@ -36,6 +36,11 @@ float dmp_quaternion_norm(dmp_quaternion* q) {
 		             + q->data[2] * q->data[2] + q->data[3] * q->data[3]);
 }
 
+void dmp_quaternion_mul(dmp_quaternion* q, dmp_quaternion* a, float m) {
+	uint8_t i;
+	for (i = 0; i < 4; ++i) q->data[i] = m * a->data[i];
+}
+
 void dmp_quaternion_add(dmp_quaternion* q, dmp_quaternion* a, dmp_quaternion* b) {
 	uint8_t i;
 	for (i = 0; i < 4; ++i) q->data[i] = a->data[i] + b->data[i];
@@ -168,6 +173,20 @@ void MadgwickAHRSupdateIMU(dmp_quaternion *q, dmp_quaternion *g, dmp_quaternion 
 }
 
 
+void dmp_filter_iir_reset(dmp_filter_iir *filter) {
+	filter->a = DMP_FILTER_IIR_DISCOUNT;
+	dmp_quaternion_init(&filter->buf, 0, 0, 0, 0);
+	//memset(&filter->buf, 0, sizeof(dmp_quaternion));
+}
+
+void dmp_filter_iir_func(dmp_filter_iir *filter, dmp_quaternion *input, dmp_quaternion *output) {
+	dmp_quaternion_mul(&filter->buf, &filter->buf, filter->a);
+	dmp_quaternion_mul(output, input, 1 - filter->a);
+	dmp_quaternion_add(output, output, &filter->buf);
+
+	memcpy(&filter->buf, output, sizeof(dmp_quaternion));
+}
+
 
 int dmp_mpu_init(dmp_mpu *mpu) {
 	mpu->fd         = mpu_open();
@@ -256,7 +275,7 @@ int dmp_run(dmp_status *dmp) {
 		else {
 			dmp_update_record(dmp);
 			dmp_get_projection(dmp, &point[0], &point[1]);
-			printf("point = (%f, %f)\n", point[0], point[1]);
+			//printf("point = (%f, %f)\n", point[0], point[1]);
 			write(dmp->fifo_out, &point[0], 2 * sizeof(float));
 			read(dmp->fifo_in, &state, 1);
 			if (state == DMP_SLEEP) dmp_mpu_config(&dmp->mpu, state);
@@ -270,8 +289,10 @@ int dmp_begin_record(dmp_status *dmp) {
 	float   norm, cos_theta, cos_theta_2, sin_theta_2;
 	dmp_quaternion gyro, accel, rot_tmp;
 
-	// time 
+	// time & filter
 	gettimeofday(&dmp->tv, NULL);
+	dmp_filter_iir_reset(&dmp->filter_gyro);
+	dmp_filter_iir_reset(&dmp->filter_accel);
 
 	// s to b
 	dmp_mpu_read(&dmp->mpu, &gyro, &accel);
@@ -307,6 +328,8 @@ int dmp_update_record(dmp_status *dmp) {
 	for (count = 0; count < DMP_EMIT_RATE; ++count) {
 		gettimeofday(&new_tv, NULL);
 		dmp_mpu_read(&dmp->mpu, &gyro, &accel);
+		dmp_filter_iir_func(&dmp->filter_gyro, &gyro, &gyro);
+		dmp_filter_iir_func(&dmp->filter_accel, &accel, &accel);
 
 		norm = dmp_quaternion_norm(&gyro);
 		printf("gyro_norm = %f\n", norm);
