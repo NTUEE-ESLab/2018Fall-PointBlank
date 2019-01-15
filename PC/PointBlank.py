@@ -5,6 +5,7 @@ import random
 import sys
 import os
 import json
+import time
 
 import ble_client
 
@@ -19,8 +20,6 @@ class Canvas(QtWidgets.QWidget):
 
 		self.app = app
 		self.point = app.primaryScreen().geometry().center()
-		self.mode = "laser"
-		self.visible = False
 
 		self.ble = ble_client.PointBlankBleClient(self)
 
@@ -42,10 +41,16 @@ class Canvas(QtWidgets.QWidget):
 			self.factor = 2
 
 	def start(self):
-		print("ble setup finished")
+		self.mode = "started"
+		self.visible = True
 		self.show()
+		self.repaint()
 
 	def quit(self):
+		self.mode = "quitting"
+		self.visible = True
+		self.repaint()
+		time.sleep(5)
 		self.app.quit()
 
 	def paintEvent(self, event):
@@ -74,6 +79,21 @@ class Canvas(QtWidgets.QWidget):
 			pen.setWidth(self.width)
 			painter.setPen(pen)
 			painter.drawEllipse(self.point*self.factor, self.r, self.r)
+		else:
+			font = QtGui.QFont()
+			font.setPixelSize(16)
+			painter.setFont(font)
+			if self.mode == "started":
+				boundingRect = painter.boundingRect(QtCore.QRectF(self.app.primaryScreen().geometry()), QtCore.Qt.AlignRight|QtCore.Qt.AlignTop, "Connected to PointBlank")
+				painter.fillRect(boundingRect, QtGui.QColor(255,255,255,100))
+				painter.drawText(QtCore.QRectF(self.app.primaryScreen().geometry()), QtCore.Qt.AlignRight|QtCore.Qt.AlignTop, "Connected to PointBlank")
+				self.mode = "laser"
+				self.visible = False
+
+			elif self.mode == "quitting":
+				boundingRect = painter.boundingRect(QtCore.QRectF(self.app.primaryScreen().geometry()), QtCore.Qt.AlignRight|QtCore.Qt.AlignTop, "PointBlank has disconnected")
+				painter.fillRect(boundingRect, QtGui.QColor(255,255,255,100))
+				painter.drawText(QtCore.QRectF(self.app.primaryScreen().geometry()), QtCore.Qt.AlignRight|QtCore.Qt.AlignTop, "PointBlank has disconnected")
 
 	def move(self):
 		if not self.visible:
