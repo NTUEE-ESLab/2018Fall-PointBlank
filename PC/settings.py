@@ -12,10 +12,6 @@ class Window(QtWidgets.QWidget):
 		self.readSettings()
 
 		self.screenshot = app.primaryScreen().grabWindow(QtWidgets.QApplication.desktop().winId())
-		if 740.0/self.screenshot.width() > 500.0/self.screenshot.height():
-			self.factor = 500.0/self.screenshot.height()
-		else:
-			self.factor = 740.0/self.screenshot.width()
 		
 		self.setWindowTitle("PointBlank settings")
 		self.resize(800, 800)
@@ -23,26 +19,22 @@ class Window(QtWidgets.QWidget):
 		self.show()
 
 	def setup(self):
-		self.canvas = Canvas(self.r, self.width, self.color, self.multiplier, self.screenshot, self.factor, self)
-		self.canvas.setGeometry(QtCore.QRect(30, 0, 740, 500))
-
-		self.centralWidget = QtWidgets.QWidget(self)
-		self.verticalWidget = QtWidgets.QWidget(self.centralWidget)
-		self.verticalWidget.setGeometry(QtCore.QRect(30, 500, 740, 300))
-		self.vertical = QtWidgets.QVBoxLayout(self.verticalWidget)
+		self.vertical = QtWidgets.QVBoxLayout(self)
 		self.vertical.setSpacing(5)
+
+		self.canvas = Canvas(self.r, self.width, self.color, self.multiplier, self.screenshot, self)
 
 		self.horizon1 = QtWidgets.QHBoxLayout()
 		self.horizon1.setContentsMargins(200, 0, 200, 0)
-		self.button1 = QtWidgets.QPushButton("Change Color", self.verticalWidget)
-		self.button2 = QtWidgets.QPushButton("Change Mode", self.verticalWidget)
+		self.button1 = QtWidgets.QPushButton("Change Color", self)
+		self.button2 = QtWidgets.QPushButton("Change Mode", self)
 		self.horizon1.addWidget(self.button1)
 		self.horizon1.addWidget(self.button2)
 		
-		self.label1 = QtWidgets.QLabel("Circle Size", self.verticalWidget)
+		self.label1 = QtWidgets.QLabel("Circle Size", self)
 		self.label1.setIndent(3)
 
-		self.slider1 = QtWidgets.QSlider(self.verticalWidget)
+		self.slider1 = QtWidgets.QSlider(self)
 		self.slider1.setTracking(True)
 		self.slider1.setMinimum(5)
 		self.slider1.setMaximum(300)
@@ -53,10 +45,10 @@ class Window(QtWidgets.QWidget):
 		self.slider1.setTickPosition(QtWidgets.QSlider.TicksBothSides)
 		self.slider1.setTickInterval(50)
 
-		self.label2 = QtWidgets.QLabel("Ring Width", self.verticalWidget)
+		self.label2 = QtWidgets.QLabel("Ring Width", self)
 		self.label2.setIndent(3)
 
-		self.slider2 = QtWidgets.QSlider(self.verticalWidget)
+		self.slider2 = QtWidgets.QSlider(self)
 		self.slider2.setTracking(True)
 		self.slider2.setMinimum(1)
 		self.slider2.setMaximum(30)
@@ -67,10 +59,10 @@ class Window(QtWidgets.QWidget):
 		self.slider2.setTickPosition(QtWidgets.QSlider.TicksBothSides)
 		self.slider2.setTickInterval(5)
 
-		self.label3 = QtWidgets.QLabel("Magnification Multiplier", self.verticalWidget)
+		self.label3 = QtWidgets.QLabel("Magnification Multiplier", self)
 		self.label3.setIndent(3)
 
-		self.slider3 = QtWidgets.QSlider(self.verticalWidget)
+		self.slider3 = QtWidgets.QSlider(self)
 		self.slider3.setTracking(True)
 		self.slider3.setMinimum(10)
 		self.slider3.setMaximum(100)
@@ -82,13 +74,14 @@ class Window(QtWidgets.QWidget):
 		self.slider3.setTickInterval(10)
 
 		self.horizon2 = QtWidgets.QHBoxLayout()
-		self.button3 = QtWidgets.QPushButton("Save", self.verticalWidget)
-		self.button4 = QtWidgets.QPushButton("Reset", self.verticalWidget)
-		self.button5 = QtWidgets.QPushButton("Close", self.verticalWidget)
+		self.button3 = QtWidgets.QPushButton("Save", self)
+		self.button4 = QtWidgets.QPushButton("Reset", self)
+		self.button5 = QtWidgets.QPushButton("Close", self)
 		self.horizon2.addWidget(self.button3)
 		self.horizon2.addWidget(self.button4)
 		self.horizon2.addWidget(self.button5)
 
+		self.vertical.addWidget(self.canvas)
 		self.vertical.addLayout(self.horizon1)
 		self.vertical.addWidget(self.label1)
 		self.vertical.addWidget(self.slider1)
@@ -97,6 +90,9 @@ class Window(QtWidgets.QWidget):
 		self.vertical.addWidget(self.label3)
 		self.vertical.addWidget(self.slider3)
 		self.vertical.addLayout(self.horizon2)
+
+		self.vertical.setStretch(0,1)
+		# self.vertical.setAlignment(self.canvas, QtCore.Qt.AlignTop)
 
 		self.slider1.valueChanged.connect(self.canvas.changeR)
 		self.slider2.valueChanged.connect(self.canvas.changeWidth)
@@ -148,19 +144,29 @@ class Window(QtWidgets.QWidget):
 		os.ftruncate(self.fd, len(args.encode()))
 
 class Canvas(QtWidgets.QWidget):
-	def __init__(self, r, width, color, multiplier, screenshot, scale, parent):
+	def __init__(self, r, width, color, multiplier, screenshot, parent):
 		super().__init__(parent)
 		self.r = r
 		self.width = width
 		self.mode = "laser"
-		self.point = QtCore.QPoint(370, 250)
+		self.point = QtCore.QPoint(400, 250)
+		self.setGeometry(QtCore.QRect(0, 0, 800, 500))
 		self.color = color
 		self.multiplier = multiplier
 		self.screenshot = screenshot
-		self.factor = scale
-		self.smallScreenshot = screenshot.scaled(screenshot.size()*scale)
-		self.align = [int((740-self.smallScreenshot.width())/2), int((500-self.smallScreenshot.height())/2)]
+
+
+		if 800.0/self.screenshot.width() > 500.0/self.screenshot.height():
+			self.factor = 500.0/self.screenshot.height()
+		else:
+			self.factor = 800.0/self.screenshot.width()
+
+		self.smallScreenshot = screenshot.scaled(screenshot.size()*self.factor)
+		self.align = [int((800-self.smallScreenshot.width())/2), int((500-self.smallScreenshot.height())/2)]
 		self.update()
+
+		print(self.size())
+		print(self.align)
 
 	def paintEvent(self, event):
 
@@ -174,7 +180,7 @@ class Canvas(QtWidgets.QWidget):
 			pen = QtGui.QPen(self.color)
 			pen.setWidth(width)
 			painter.setPen(pen)
-			painter.drawArc(370-r,250-r,2*r,2*r, 0, 5760);
+			painter.drawArc(400-r,250-r,2*r,2*r, 0, 5760);
 
 		elif self.mode == "highlight":
 			path = QtGui.QPainterPath()
