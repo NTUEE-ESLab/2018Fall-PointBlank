@@ -350,11 +350,11 @@ int dmp_get_projection(dmp_status *dmp, float* x, float *y) {
 	dmp_quaternion_rotate(&direct, &dmp->rot_s2e);
 	dmp_quaternion_rotate(&direct, &dmp->rot_e2b);
 
-	tmp_x = -direct.data[1] + 0.5;
+	tmp_x = -direct.data[1] * DMP_PROJECTION_SCALE + 0.5;
 	if (tmp_x < 0.0) tmp_x = 0.0;
 	if (tmp_x > 1.0) tmp_x = 1.0;
 
-	tmp_y = direct.data[3] + 0.5;
+	tmp_y =  direct.data[3] * DMP_PROJECTION_SCALE + 0.5;
 	if (tmp_y < 0.0) tmp_y = 0.0;
 	if (tmp_y > 1.0) tmp_y = 1.0;
 
