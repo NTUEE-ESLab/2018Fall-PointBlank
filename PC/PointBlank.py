@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from PyQt5 import QtWidgets, QtCore, QtGui, QtBluetooth
 import pyautogui
 import random

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
 import os
@@ -178,7 +178,7 @@ class Canvas(QtWidgets.QWidget):
 
 		elif self.mode == "highlight":
 			path = QtGui.QPainterPath()
-			path.addRect(QtCore.QRectF(self.align[0],self.align[1],self.screenshot.width(),self.screenshot.height()))
+			path.addRect(QtCore.QRectF(self.align[0],self.align[1],self.smallScreenshot.width(),self.smallScreenshot.height()))
 			path.addEllipse(self.point, r, r)
 			painter.fillPath(path, self.color)
 
