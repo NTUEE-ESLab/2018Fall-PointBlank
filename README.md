@@ -15,3 +15,7 @@ For all platforms, the following python libraries are also needed:
 PyQt5
 pyautogui
 ```
+
+## Demo
+Youtube video
+https://www.youtube.com/watch?v=mGobSX6rNwA&list=PLBc0A7aN8odutAUrcdlcwq_626UYvtjB_&index=1
