@@ -6,9 +6,9 @@ PointBlank is intended to be an advanced version of a presentation pointer. It u
 ### Modes
 1. "Laser"  
    ![laser mode](https://drive.google.com/uc?id=1Z6dSoSBDCfaTY0aqWeR3gc14uwZ7pecu)
-2. "Highlight"
+2. "Highlight"  
    ![highlight mode](https://drive.google.com/uc?id=1nmL9WG6JzVtWSaJk0aBSbOtc5kD3V-lJ)
-3. "Magnify"
+3. "Magnify"  
    ![magnify mode](https://drive.google.com/uc?id=1DECowGI2Fo_dc-A5QnImuL0ytASUVZsP)
 4. "Mouse"  
     The previous modes are meant for presentation, so their next/prev. slide buttons simulate DOWN and UP of the keyboard.
@@ -98,5 +98,4 @@ Please also make sure you have **python2** installed.
    Add `sudo /home/pi/PointBlank/rpi/start.sh` before `exit 0`.
 
 ## Demo
-[Youtube video]
-(https://www.youtube.com/watch?v=mGobSX6rNwA&list=PLBc0A7aN8odutAUrcdlcwq_626UYvtjB_&index=1)
+[Youtube video](https://www.youtube.com/watch?v=mGobSX6rNwA&list=PLBc0A7aN8odutAUrcdlcwq_626UYvtjB_&index=1)
