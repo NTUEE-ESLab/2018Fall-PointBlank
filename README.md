@@ -98,4 +98,4 @@ Please also make sure you have **python2** installed.
    Add `sudo /home/pi/PointBlank/rpi/start.sh` before `exit 0`.
 
 ## Demo
-[Youtube video](https://www.youtube.com/watch?v=mGobSX6rNwA&list=PLBc0A7aN8odutAUrcdlcwq_626UYvtjB_&index=1)
+[Youtube video](https://www.youtube.com/watch?v=A-FSEL_J8NY&feature=youtu.be)
