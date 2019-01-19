@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include <wiringPi.h>
 #include <fcntl.h>
 #include "dmp.h"
 
