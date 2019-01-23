@@ -97,5 +97,8 @@ Please also make sure you have **python2** installed.
 **_Note:_** If you want Raspberry Pi to start the program automatically at startup, edit the file `/etc/rc.local` with root access.
    Add `sudo /home/pi/PointBlank/rpi/start.sh` before `exit 0`.
 
+## Implementation Details
+   Please refer to our [report](https://github.com/NTUEE-ESLab/2018Fall-PointBlank/blob/master/report.pdf).
+
 ## Demo
 [Youtube video](https://www.youtube.com/watch?v=A-FSEL_J8NY&feature=youtu.be)
